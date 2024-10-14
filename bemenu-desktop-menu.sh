@@ -19,72 +19,72 @@
 
 shopt -s extglob
 
-declare desktop_list filename categorie icon name
-declare -a bemenu_cmd desktop_path desktop_files \
-  desktop_filenames desktop_filenames
-declare -A categories_xdg
+declare -f format_entries
+declare -a bemenu_cmd desktop_path desktop_files
+declare AudioVideo Audio Video Development Education Game Graphics Network \
+  Office Science Settings System Utility Other tmplist
 
 # bemenu command
 bemenu_cmd=(bemenu)
-
-# matching emoji for main categories
-categories_xdg[AudioVideo]="🎬"
-categories_xdg[Audio]="🎧"
-categories_xdg[Video]="🎞️"
-categories_xdg[Development]="🚀"
-categories_xdg[Education]="🎓"
-categories_xdg[Game]="🎮"
-categories_xdg[Graphics]="🎨"
-categories_xdg[Network]="📡"
-categories_xdg[Office]="💼"
-categories_xdg[Science]="🧪"
-categories_xdg[Settings]="🪛"
-categories_xdg[System]="💻"
-categories_xdg[Utility]="🛠️"
-categories_xdg[Other]="❓"
 
 # desktop entries directories paths
 desktop_path=( "$HOME/.local/share/applications" )
 desktop_path+=( "/usr/local/share/applications" )
 desktop_path+=( "/usr/share/applications" )
 
-# desktop entries absolute paths
-desktop_files=( ${desktop_path[*]/%/\/\*\.\*} )
+# desktop entries absolute filepaths
+# shellcheck disable=SC2206
+desktop_files=( ${desktop_path[*]/%//*.desktop} )
 
-for application in "${desktop_files[@]}"; do
-  # wrong filetype?
-  if [[ ! "$application" =~ \.desktop$ ]]; then
-    continue
-  fi
+# temporary fle to store unique entires filenames
+tmplist="/tmp/.bemenu-desktop-menu.tmp"
 
-  filename=$(basename "$application")
-  # already listed more locally?
-  if [[ "${desktop_filenames[*]}" =~ $filename ]]; then
-    continue
-  fi
+# main categories icons
+AudioVideo="🎬"
+Audio="🎧"
+Video="🎞️"
+Development="🚀"
+Education="🎓"
+Game="🎮"
+Graphics="🎨"
+Network="📡"
+Office="💼"
+Science="🧪"
+Settings="🪛"
+System="💻"
+Utility="🛠️"
+Other="❓"
 
-  desktop_filenames+=( "$filename" )
-  # is marked to not be displayed?
-  if /usr/bin/grep -Eq -- '^NoDisplay=true$|^Hidden=true$' "$application"; then
-    continue
-  fi
-  # match icons
-  categorie=$(printf '%s\n' \
-    "$(sed -rn -e 's/;/\n/g' -e '/^Categories=/{s/^Categories=(.*)$/\1/p;q}' "$application")" \
-    "${!categories_xdg[@]}" | sort | uniq -d | head -1)
-  if [[ -v "categories_xdg[$categorie]" ]]; then
-    icon="${categories_xdg[$categorie]}"
+format_entries() {
+  local filename category
+  # keep the most local version
+  filename=$(basename "$1")
+  if /usr/bin/grep -Eq "$filename" "$tmplist"; then
+    return
   else
-    icon="${categories_xdg[Other]}"
+    echo " $filename" >> "$tmplist"
   fi
+  # respect NoDisplay & Hidden
+  if /usr/bin/grep -Eq '^NoDisplay=true$|^Hidden=true$' "$1"; then
+    return
+  fi
+  # assocate the first main category to an icon
+  category=$(printf '%s\n' "$(sed -rn -e 's/;/\n/g' -e '/^Categories=/{s/^Categories=(.*)$/\1 AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other/p;q}' "$1")" | tr ' ' '\n' | sort | uniq -d | head -1)
+  [[ -z "$category" ]] && category="Other"
+  # line for the menu
+  printf '%s %-50s[%s]\n' "${!category}" "$(sed -rn '/^Name=/{s/^Name=(.*)$/\1/p;q}' "$1")" "$1"
+}
 
-  name=$(sed -r -n '/^Name=/{s/^Name=(.*)$/\1/p;q}' "$application")
-  # append 'icon name [absolute path]'
-  desktop_list+="$icon $(printf %-50s "$name") [$application]\n"
-done
+# exports for the subshells in xargs
+export -f format_entries
+export AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other
+export tmplist
 
-# run the file with setsid and dex
-echo -e "$desktop_list" \
+# create/clean tmplist
+truncate --size 0 "$tmplist"
+
+# main
+printf '%s\0' "${desktop_files[@]}" | xargs -0 -P 8 -I {} bash -c 'format_entries "$@"' _ {} \
   | head -c -1 | sort --ignore-case --field-separator=' ' --key=1 --key=2 \
   | "${bemenu_cmd[@]}" --prompt "󰣆 Desktop Menu" | awk -F '[][]' '{print $2}' \
   | xargs -I _ setsid --fork dex _ > /dev/null 2>&1 &
