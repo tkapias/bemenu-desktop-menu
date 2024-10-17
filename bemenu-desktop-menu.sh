@@ -69,7 +69,7 @@ else
   Other="❓"
 
   format_entries() {
-    local filename category
+    local filename category name genericname lang
     # keep the most local version
     filename=$(basename "$1")
     if /usr/bin/grep -Eq "$filename" "$tmp_entries"; then
@@ -84,8 +84,23 @@ else
     # assocate the first main category to an icon
     category=$(printf '%s\n' "$(sed -rn -e 's/;/\n/g' -e '/^Categories=/{s/^Categories=(.*)$/\1 AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other/p;q}' "$1")" | tr ' ' '\n' | sort | uniq -d | head -1)
     [[ -z "$category" ]] && category="Other"
+    # localized names
+    if [[ -n "${LANGUAGE::2}" ]]; then
+      lang="\[${LANGUAGE::2}\]"
+      if grep -q -e "Name[${lang}]="; then
+        name=$(sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name${lang}=(.*)$/\1/p}" "$1")
+      else
+        name=$(sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name=(.*)$/\1/p}" "$1")
+      fi
+      if grep -q -e "GenericName[${lang}]="; then
+        genericname=$(sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName${lang}=(.*)$/\1/p}" "$1")
+      else
+        genericname=$(sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName=(.*)$/\1/p}" "$1")
+      fi
+    fi
+    [[ -n "$genericname" ]] && name+="  ($genericname)"
     # line for the menu
-    printf '%s %-50s[%s]\n' "${!category}" "$(sed -rn '/^Name=/{s/^Name=(.*)$/\1/p;q}' "$1")" "$1"
+    printf '%s %-55s[%s]\n' "${!category}" "$name" "$1"
   }
 
   # exports for the subshells in xargs
