@@ -46,9 +46,9 @@ tmp_entries="$HOME/.cache/bemenu-desktop-menu/entries"
 tmp_last="$HOME/.cache/bemenu-desktop-menu/last"
 
 # check if the cache is up-to-date
-old_last=$(/usr/bin/cut -d " " -f1 < $tmp_last)
+old_last=$(/usr/bin/cut -d " " -f1 < "$tmp_last")
 new_last=$(/usr/bin/stat --format='%Y' "${desktop_files[@]}" | /usr/bin/sort -n | /usr/bin/tail -1)
-old_count=$(/usr/bin/cut -d " " -f2 < $tmp_last)
+old_count=$(/usr/bin/cut -d " " -f2 < "$tmp_last")
 new_count=$(/usr/bin/ls "${desktop_files[@]}" | /usr/bin/wc -l)
 echo -n "$new_last $new_count" > "$tmp_last"
 
