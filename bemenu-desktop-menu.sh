@@ -11,7 +11,7 @@
 #   bemenu-orange-wrapper
 #   Nerd-Fonts
 #   bash
-#   sed, xargs, awk
+#   GNU sed, xargs, awk
 #   dex
 #   setsid
 #
@@ -23,7 +23,7 @@ declare -f format_entries
 declare -a bemenu_cmd desktop_path desktop_files
 declare AudioVideo Audio Video Development Education Game Graphics Network \
   Office Science Settings System Utility Other
-declare tmp_list tmp_entries tmp_last old_last new_last
+declare tmp_list tmp_entries tmp_last old_last new_last old_count new_count
 
 # bemenu command
 bemenu_cmd=(bemenu)
