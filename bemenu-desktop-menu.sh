@@ -44,6 +44,7 @@ tmp_entries="/tmp/bemenu-desktop-menu_entries"
 # tmp file storing POSIX date of the last modification and count of entries
 tmp_last="/tmp/bemenu-desktop-menu_last"
 
+# check if the tmp needs an update
 old_last=$(cut -d " " -f1 < $tmp_last)
 new_last=$(stat --format='%Y' "${desktop_files[@]}" | sort -n | tail -1)
 old_count=$(cut -d " " -f2 < $tmp_last)
@@ -69,6 +70,9 @@ else
   System="💻"
   Utility="🛠️"
   Other="❓"
+
+  # create/clean tmp_entries
+  truncate --size 0 "$tmp_entries"
 
   format_entries() {
     local filename category name genericname lang
@@ -109,11 +113,9 @@ else
 
   # exports for the subshells in xargs
   export -f format_entries
-  export AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other
+  export AudioVideo Audio Video Development Education Game Graphics Network \
+    Office Science Settings System Utility Other
   export tmp_entries
-
-  # create/clean tmp_entries
-  truncate --size 0 "$tmp_entries"
 
   # main
   printf '%s\0' "${desktop_files[@]}" | xargs -0 -P 8 -I {} bash -c 'format_entries "$@"' _ {} \
