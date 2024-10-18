@@ -44,7 +44,9 @@ ln -s $PWD/bemenu-desktop-menu.sh $HOME/.local/bin/bemenu-desktop-menu
 
 - Entries sorted by Main Categories.
 - Main Categories icon using Emojis.
+- Display entry Name and Generic Name localized if available.
 - Display the entry file location in brackets.
+- Cache the list and generate only if the count or modification date of entries changed.
 - Respect Hidden & NoDisplay features.
 - Run the application forked using setsid.
 - Run the application using also dex to respect XDG.
