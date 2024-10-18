@@ -41,14 +41,16 @@ desktop_files=( ${desktop_path[*]/%//*.desktop} )
 tmp_list="/tmp/bemenu-desktop-menu_list"
 # tmp file storing filenames of unique entires
 tmp_entries="/tmp/bemenu-desktop-menu_entries"
-# tmp file storing POSIX date of the last modification to entries
+# tmp file storing POSIX date of the last modification and count of entries
 tmp_last="/tmp/bemenu-desktop-menu_last"
 
-old_last=$(cat $tmp_last)
+old_last=$(cat $tmp_last | cut -d " " -f1)
 new_last=$(stat --format='%Y' "${desktop_files[@]}" | sort -n | tail -1)
-echo -n "$new_last" > "$tmp_last"
+old_count=$(cat $tmp_last | cut -d " " -f2)
+new_count=$(/usr/bin/ls "${desktop_files[@]}" | wc -l)
+echo -n "$new_last $new_count" > "$tmp_last"
 
-if [[ -f "$tmp_last" ]] && [[ "$old_last" -ge "$new_last" ]]; then
+if [[ -f "$tmp_last" ]] && [[ "$old_last" -ge "$new_last" ]] && [[ "$old_count" == "$new_count" ]]; then
   cat "$tmp_list" | "${bemenu_cmd[@]}" --prompt "󰣆 Desktop Menu" | awk -F '[][]' '{print $2}' \
   | xargs -I _ setsid --fork dex _ > /dev/null 2>&1 &
 else
@@ -98,7 +100,9 @@ else
         genericname=$(sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName=(.*)$/\1/p}" "$1")
       fi
     fi
-    [[ -n "$genericname" ]] && name+="  ($genericname)"
+    if [[ -n "$genericname" ]] && [[ ! "$genericname" == "$name" ]]; then
+      name+="  ($genericname)"
+    fi
     # line for the menu
     printf '%s %-55s[%s]\n' "${!category}" "$name" "$1"
   }
