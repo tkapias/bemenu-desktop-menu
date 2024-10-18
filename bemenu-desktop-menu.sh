@@ -44,14 +44,14 @@ tmp_entries="/tmp/bemenu-desktop-menu_entries"
 # tmp file storing POSIX date of the last modification and count of entries
 tmp_last="/tmp/bemenu-desktop-menu_last"
 
-old_last=$(cat $tmp_last | cut -d " " -f1)
+old_last=$(cut -d " " -f1 < $tmp_last)
 new_last=$(stat --format='%Y' "${desktop_files[@]}" | sort -n | tail -1)
-old_count=$(cat $tmp_last | cut -d " " -f2)
+old_count=$(cut -d " " -f2 < $tmp_last)
 new_count=$(/usr/bin/ls "${desktop_files[@]}" | wc -l)
 echo -n "$new_last $new_count" > "$tmp_last"
 
 if [[ -f "$tmp_last" ]] && [[ "$old_last" -ge "$new_last" ]] && [[ "$old_count" == "$new_count" ]]; then
-  cat "$tmp_list" | "${bemenu_cmd[@]}" --prompt "󰣆 Desktop Menu" | awk -F '[][]' '{print $2}' \
+  "${bemenu_cmd[@]}" --prompt "󰣆 Desktop Menu" < "$tmp_list" | awk -F '[][]' '{print $2}' \
   | xargs -I _ setsid --fork dex _ > /dev/null 2>&1 &
 else
   # main categories icons
