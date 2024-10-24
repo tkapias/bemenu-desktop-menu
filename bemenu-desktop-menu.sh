@@ -76,7 +76,7 @@ else
   /usr/bin/truncate --size 0 "$tmp_entries"
 
   format_entries() {
-    local filename category name genericname lang
+    local filename category name genericname
     # keep the most local version
     filename=$(/usr/bin/basename "$1")
     if /usr/bin/grep -Eq "$filename" "$tmp_entries"; then
@@ -92,24 +92,22 @@ else
     category=$(/usr/bin/printf '%s\n' "$(/usr/bin/sed -rn -e 's/;/\n/g' -e '/^Categories=/{s/^Categories=(.*)$/\1 AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other/p;q}' "$1")" | /usr/bin/tr ' ' '\n' | /usr/bin/sort | /usr/bin/uniq -d | /usr/bin/head -1)
     [[ -z "$category" ]] && category="Other"
     # localized names
-    if [[ -n "${LANGUAGE::2}" ]]; then
-      lang="${LANGUAGE::2}"
-      if /usr/bin/grep -q -e "Name\[${lang}\]=" "$1"; then
-        name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name\[${lang}\]=(.*)$/\1/p}" "$1")
-      else
-        name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name=(.*)$/\1/p}" "$1")
-      fi
-      if /usr/bin/grep -q -e "GenericName\[${lang}\]=" "$1"; then
-        genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName\[${lang}\]=(.*)$/\1/p}" "$1")
-      else
-        genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName=(.*)$/\1/p}" "$1")
-      fi
+    name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name\[${LANGUAGE::2}\]=(.*)$/\1/p}" "$1")
+    if [[ -z "$name" ]]; then
+      name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name=(.*)$/\1/p}" "$1")
+    fi
+    genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName\[${LANGUAGE::2}\]=(.*)$/\1/p}" "$1")
+    if [[ -z "$genericname" ]]; then
+      genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName=(.*)$/\1/p}" "$1")
     fi
     if [[ -n "$genericname" ]] && [[ ! "$genericname" == "$name" ]]; then
-      name+="  ($genericname)"
+      genericname=" ($genericname)"
+    else
+      genericname=""
     fi
+    padding="                                                            "
     # line for the menu
-    /usr/bin/printf '%s %-55s[%s]\n' "${!category}" "$name" "$1"
+    /usr/bin/printf '%s %s%s%s [%s]\n' "${!category}" "$name" "${padding:$((${#name} + ${#genericname}))}" "$genericname" "$1"
   }
 
   # exports for the subshells in xargs
