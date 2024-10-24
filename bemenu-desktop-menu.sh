@@ -46,9 +46,9 @@ tmp_entries="$HOME/.cache/bemenu-desktop-menu/entries"
 tmp_last="$HOME/.cache/bemenu-desktop-menu/last"
 
 # check if the cache is up-to-date
-old_last=$(/usr/bin/cut -d " " -f1 < "$tmp_last")
+old_last=$(/usr/bin/cut -d " " -f1 2> /dev/null < "$tmp_last" || echo 0)
 new_last=$(/usr/bin/stat --format='%Y' "${desktop_files[@]}" | /usr/bin/sort -n | /usr/bin/tail -1)
-old_count=$(/usr/bin/cut -d " " -f2 < "$tmp_last")
+old_count=$(/usr/bin/cut -d " " -f2 2> /dev/null < "$tmp_last" || echo 0)
 new_count=$(/usr/bin/ls "${desktop_files[@]}" | /usr/bin/wc -l)
 echo -n "$new_last $new_count" > "$tmp_last"
 
@@ -93,14 +93,14 @@ else
     [[ -z "$category" ]] && category="Other"
     # localized names
     if [[ -n "${LANGUAGE::2}" ]]; then
-      lang="\[${LANGUAGE::2}\]"
-      if /usr/bin/grep -q -e "Name[${lang}]="; then
-        name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name${lang}=(.*)$/\1/p}" "$1")
+      lang="${LANGUAGE::2}"
+      if /usr/bin/grep -q -e "Name\[${lang}\]=" "$1"; then
+        name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name\[${lang}\]=(.*)$/\1/p}" "$1")
       else
         name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name=(.*)$/\1/p}" "$1")
       fi
-      if /usr/bin/grep -q -e "GenericName[${lang}]="; then
-        genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName${lang}=(.*)$/\1/p}" "$1")
+      if /usr/bin/grep -q -e "GenericName\[${lang}\]=" "$1"; then
+        genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName\[${lang}\]=(.*)$/\1/p}" "$1")
       else
         genericname=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^GenericName=(.*)$/\1/p}" "$1")
       fi
