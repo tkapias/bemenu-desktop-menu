@@ -11,7 +11,7 @@
 #   bemenu-orange-wrapper
 #   Nerd-Fonts
 #   bash
-#   GNU sed, xargs, awk
+#   GNU awk, sed, xargs
 #   dex
 #   setsid
 #
@@ -36,6 +36,10 @@ desktop_path+=("/usr/share/applications")
 # desktop entries absolute filepaths
 # shellcheck disable=SC2206
 desktop_files=(${desktop_path[*]/%//*.desktop})
+if [[ -z "${desktop_files[*]}" ]]; then
+	echo "No Desktop entries found."
+	exit 1
+fi
 
 [[ ! -d "$HOME/.cache/bemenu-desktop-menu/" ]] && /usr/bin/mkdir -p "$HOME/.cache/bemenu-desktop-menu/"
 # cache storing the bemenu list generated last time
@@ -89,7 +93,9 @@ else
 			return
 		fi
 		# assocate the first main category to an icon
-		category=$(/usr/bin/printf '%s\n' "$(/usr/bin/sed -rn -e 's/;/\n/g' -e '/^Categories=/{s/^Categories=(.*)$/\1 AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other/p;q}' "$1")" | /usr/bin/tr ' ' '\n' | /usr/bin/sort | /usr/bin/uniq -d | /usr/bin/head -1)
+		category=$(/usr/bin/printf '%s\n' "$(/usr/bin/sed -rn -e 's/;/\n/g' \
+			-e '/^Categories=/{s/^Categories=(.*)$/\1 AudioVideo Audio Video Development Education Game Graphics Network Office Science Settings System Utility Other/p;q}' "$1")" |
+			/usr/bin/tr ' ' '\n' | /usr/bin/sort | /usr/bin/uniq -d | /usr/bin/head -1)
 		[[ -z "$category" ]] && category="Other"
 		# localized names
 		name=$(/usr/bin/sed -rn "/^\[Desktop Entry\]$/,/^\[/{s/^Name\[${LANGUAGE::2}\]=(.*)$/\1/p}" "$1")

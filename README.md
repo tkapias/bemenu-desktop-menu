@@ -8,13 +8,12 @@ The preview uses my wrapper for bemenu: [bemenu-orange-wrapper](https://github.c
 
 ## Dependencies
 
-- [nb](https://github.com/xwmx/nb)
 - [bemenu >= 0.6](https://github.com/Cloudef/bemenu)
 - [Nerd Fonts (Symbols Only)](https://github.com/ryanoasis/nerd-fonts/releases/latest)
 - [dex](https://github.com/jceb/dex)
 - Bash >= 5
 - setsid
-- Sed, Awk, xargs
+- GNU awk, sed, xargs
 
 ### Optional
 
@@ -22,10 +21,25 @@ The preview uses my wrapper for bemenu: [bemenu-orange-wrapper](https://github.c
 
 ## Installation
 
+### Dependencies
+
+- Debian example with [bemenu-orange-wrapper](https://github.com/tkapias/bemenu-orange-wrapper):
+
+1. Follow [bemenu-orange-wrapper instructions](https://github.com/tkapias/bemenu-orange-wrapper?tab=readme-ov-file#installation).
+
+2. Next:
+
+``` bash
+# GNU awk, sed, xargs, setsid, dex
+sudo apt install gawk sed findutils util-linux dex
+```
+
+### bemenu-desktop-menu
+
 ```bash
-git clone --depth 0 https://github.com/tkapias/bemenu-desktop-menu.git bemenu-desktop-menu
+git clone --depth 1 https://github.com/tkapias/bemenu-desktop-menu.git bemenu-desktop-menu
 cd bemenu-desktop-menu
-chmod +x bemenu-desktop-menu.sh
+chmod +x bemenu-desktop-menu.bash
 ```
 
   - The script uses the default locations to find the desktop entries:
@@ -37,7 +51,7 @@ chmod +x bemenu-desktop-menu.sh
 - Optional: Symlink to a directory in your user's path:
 
 ```bash
-ln -s $PWD/bemenu-desktop-menu.sh $HOME/.local/bin/bemenu-desktop-menu
+ln -s $PWD/bemenu-desktop-menu.bash $HOME/.local/bin/bemenu-desktop-menu
 ```
 
 ## Features
