@@ -29,7 +29,11 @@ declare tmp_list tmp_entries tmp_last old_last new_last old_count new_count
 bemenu_cmd=(bemenu)
 
 # desktop entries directories paths
-desktop_path=("$HOME/.local/share/applications")
+if [[ -n $XDG_DATA_HOME ]]; then
+	desktop_path=("$XDG_DATA_HOME/applications")
+else
+	desktop_path=("$HOME/.local/share/applications")
+fi
 desktop_path+=("/usr/local/share/applications")
 desktop_path+=("/usr/share/applications")
 
@@ -41,13 +45,18 @@ if [[ -z "${desktop_files[*]}" ]]; then
 	exit 1
 fi
 
-[[ ! -d "$HOME/.cache/bemenu-desktop-menu/" ]] && /usr/bin/mkdir -p "$HOME/.cache/bemenu-desktop-menu/"
+if [[ -n $XDG_CACHE_HOME ]]; then
+	tmp_dir="$XDG_CACHE_HOME/bemenu-desktop-menu"
+elif [[ ! -d "$HOME/.cache" ]]; then
+	tmp_dir="$HOME/.cache/bemenu-desktop-menu/"
+fi
+[[ ! -d "$tmp_dir" ]] && /usr/bin/mkdir -p "$tmp_dir"
 # cache storing the bemenu list generated last time
-tmp_list="$HOME/.cache/bemenu-desktop-menu/list"
+tmp_list="$tmp_dir/list"
 # cache storing filenames of unique entires
-tmp_entries="$HOME/.cache/bemenu-desktop-menu/entries"
+tmp_entries="$tmp_dir/entries"
 # cache storing POSIX date of the last modification and count of entries
-tmp_last="$HOME/.cache/bemenu-desktop-menu/last"
+tmp_last="$tmp_dir/last"
 
 # check if the cache is up-to-date
 old_last=$(/usr/bin/cut -d " " -f1 2>/dev/null <"$tmp_last" || echo 0)
@@ -111,9 +120,9 @@ else
 		else
 			genericname=""
 		fi
-		padding="                                                            "
+		padding="                                                                      "
 		# line for the menu
-		/usr/bin/printf '%s %s%s%s [%s]\n' "${!category}" "$name" "${padding:$((${#name} + ${#genericname}))}" "$genericname" "$1"
+		/usr/bin/printf '%s %s %s%s%s [%s]\n' "$category" "${!category}" "$name" "${padding:$((${#name} + ${#genericname}))}" "$genericname" "$1"
 	}
 
 	# exports for the subshells in xargs
@@ -124,7 +133,7 @@ else
 
 	# main
 	/usr/bin/printf '%s\0' "${desktop_files[@]}" | /usr/bin/xargs -0 -P 8 -I {} bash -c 'format_entries "$@"' _ {} |
-		/usr/bin/head -c -1 | /usr/bin/sort --ignore-case --field-separator=' ' --key=1 --key=2 | /usr/bin/tee "$tmp_list" |
-		"${bemenu_cmd[@]}" --prompt "󰣆 Desktop Menu" | /usr/bin/awk -F '[][]' '{print $2}' |
+		/usr/bin/head -c -1 | /usr/bin/sort --ignore-case --field-separator=' ' --key=1 --key=2 | cut -d" " -f2- | /usr/bin/tee "$tmp_list" |
+		timeout 10 "${bemenu_cmd[@]}" --prompt "󰣆 Desktop Menu" | /usr/bin/awk -F '[][]' '{print $2}' |
 		/usr/bin/xargs -I _ /usr/bin/setsid --fork /usr/bin/dex _ >/dev/null 2>&1 &
 fi
